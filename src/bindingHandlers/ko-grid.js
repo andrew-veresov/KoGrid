@@ -14,6 +14,35 @@
                 grid.searchProvider.evalFilter();
                 grid.refreshDomSizes();
             });
+			//VERESOV on 2013/07/12: fix bug with uninitialized selectedItems field
+            if (options.selectedItems != undefined) {
+                options.selectedItems.subscribeArrayChanged(
+                    function (dataAdded) {
+                        if (grid.$$selectionPhase) {
+                            return;
+                        }
+
+                        $.each(grid.rowFactory.rowCache, function (key, row) {
+                            if (row.entity == dataAdded) {
+                                grid.selectionService.setSelection(row, true);
+                                return;
+                            }
+                        });
+                    },
+                    function (dataDeleted) {
+                        if (grid.$$selectionPhase) {
+                            return;
+                        }
+
+                        $.each(grid.rowFactory.rowCache, function (key, row) {
+                            if (row.entity == dataDeleted) {
+                                grid.selectionService.setSelection(row, false);
+                                return;
+                            }
+                        });
+                    }
+                );
+            }
             // if columndefs are observable watch for changes and rebuild columns.
             if (ko.isObservable(options.columnDefs)) {
                 options.columnDefs.subscribe(function (newDefs) {

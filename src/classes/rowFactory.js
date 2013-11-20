@@ -166,6 +166,10 @@ window.kg.RowFactory = function (grid) {
         var data = grid.filteredData();
         var maxDepth = groups.length;
         var cols = grid.columns();
+		
+		if (!cols.length) {
+            return;
+        }
 
         $.each(data, function (i, item) {
             item[KG_HIDDEN] = true;
