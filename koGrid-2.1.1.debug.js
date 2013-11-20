@@ -2,7 +2,7 @@
 * koGrid JavaScript Library
 * Authors: https://github.com/ericmbarnard/koGrid/blob/master/README.md
 * License: MIT (http://www.opensource.org/licenses/mit-license.php)
-* Compiled At: 01/11/2013 15:58:36
+* Compiled At: 11/21/2013 01:17:19
 ***********************************************/
 
 (function (window) {
@@ -244,6 +244,35 @@ ko.bindingHandlers['koGrid'] = (function () {
                 grid.searchProvider.evalFilter();
                 grid.refreshDomSizes();
             });
+			//VERESOV on 2013/07/12: fix bug with uninitialized selectedItems field
+            if (options.selectedItems != undefined) {
+                options.selectedItems.subscribeArrayChanged(
+                    function (dataAdded) {
+                        if (grid.$$selectionPhase) {
+                            return;
+                        }
+
+                        $.each(grid.rowFactory.rowCache, function (key, row) {
+                            if (row.entity == dataAdded) {
+                                grid.selectionService.setSelection(row, true);
+                                return;
+                            }
+                        });
+                    },
+                    function (dataDeleted) {
+                        if (grid.$$selectionPhase) {
+                            return;
+                        }
+
+                        $.each(grid.rowFactory.rowCache, function (key, row) {
+                            if (row.entity == dataDeleted) {
+                                grid.selectionService.setSelection(row, false);
+                                return;
+                            }
+                        });
+                    }
+                );
+            }
             // if columndefs are observable watch for changes and rebuild columns.
             if (ko.isObservable(options.columnDefs)) {
                 options.columnDefs.subscribe(function (newDefs) {
@@ -1025,6 +1054,10 @@ window.kg.RowFactory = function (grid) {
         var data = grid.filteredData();
         var maxDepth = groups.length;
         var cols = grid.columns();
+		
+		if (!cols.length) {
+            return;
+        }
 
         $.each(data, function (i, item) {
             item[KG_HIDDEN] = true;
@@ -1106,7 +1139,7 @@ window.kg.Grid = function (options) {
             enableSorting: true,
             maintainColumnRatios: undefined,
             beforeSelectionChange: function () { return true;},
-            afterSelectionChange: function () { },
+            afterSelectionChange: function () { return true; },
             columnsChanged: function() { },
             rowTemplate: undefined,
             headerRowTemplate: undefined,
@@ -1213,14 +1246,16 @@ window.kg.Grid = function (options) {
             columnDefs = self.config.columnDefs;
         }
         if (self.config.displaySelectionCheckbox && self.config.canSelectRows) {
-            columnDefs.splice(0, 0, {
-                field: '\u2714',
-                width: self.elementDims.rowSelectedCellW,
-                sortable: false,
-                resizable: false,
-                headerCellTemplate: '<input class="kgSelectionHeader" type="checkbox" data-bind="visible: $grid.multiSelect, checked: $grid.allSelected"/>',
-                cellTemplate: '<div class="kgSelectionCell"><input class="kgSelectionCheckbox" type="checkbox" data-bind="checked: $parent.selected" /></div>'
-            });
+            if (columnDefs.length > 0 && columnDefs[0].field != '\u2714') {
+                columnDefs.splice(0, 0, {
+                    field: '\u2714',
+                    width: self.elementDims.rowSelectedCellW,
+                    sortable: false,
+                    resizable: false,
+                    headerCellTemplate: '<input class="kgSelectionHeader" type="checkbox" data-bind="visible: $grid.multiSelect, checked: $grid.allSelected"/>',
+                    cellTemplate: '<div class="kgSelectionCell"><input class="kgSelectionCheckbox" type="checkbox" data-bind="checked: $parent.selected" /></div>'
+                });
+            }
         }
         if (columnDefs.length > 0) {
             $.each(columnDefs, function (i, colDef) {
@@ -1842,7 +1877,9 @@ window.kg.SelectionService = function (grid) {
         rowItem.entity[SELECTED_PROP] = isSelected;
         if (!isSelected) {
             var indx = self.selectedItems.indexOf(rowItem.entity);
-            self.selectedItems.splice(indx, 1);
+			if (indx > 0) {
+				self.selectedItems.splice(indx, 1);
+			}
         } else {
             if (self.selectedItems.indexOf(rowItem.entity) === -1) {
                 self.selectedItems.push(rowItem.entity);
@@ -1853,21 +1890,25 @@ window.kg.SelectionService = function (grid) {
     // @return - boolean indicating if all items are selected or not
     // @val - boolean indicating whether to select all/de-select all
     self.toggleSelectAll = function (checkAll) {
-        var selectedlength = self.selectedItems().length;
-        if (selectedlength > 0) {
-            self.selectedItems.splice(0, selectedlength);
+        var selected = self.selectedItems();
+        if (selected.length) {
+            self.selectedItems([]);
         }
         $.each(grid.filteredData(), function (i, item) {
             item[SELECTED_PROP] = checkAll;
+
             if (checkAll) {
-                self.selectedItems.push(item);
+                selected.push(item);
             }
         });
+
         $.each(self.rowFactory.rowCache, function (i, row) {
             if (row && row.selected) {
                 row.selected(checkAll);
             }
         });
+
+        self.selectedItems.valueHasMutated();
     };
 };
 
@@ -1938,7 +1979,7 @@ window.kg.sortService = {
         } 
         // now lets string check..
         //check if the item data is a valid number
-        if (item.match(/^-?[£$¤]?[\d,.]+%?$/)) {
+        if (item.match(/^-?[?$¤]?[\d,.]+%?$/)) {
             return window.kg.sortService.sortNumberStr;
         } 
         // check for a date: dd/mm/yyyy or dd/mm/yy
