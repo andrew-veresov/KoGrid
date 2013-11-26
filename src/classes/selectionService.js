@@ -34,7 +34,7 @@ window.kg.SelectionService = function (grid) {
 	            if (rows[rows.length - 1].beforeSelectionChange(rows, evt)) {
 	                $.each(rows, function(i, ri) {
 	                    ri.selected(true);
-	                    ri.entity[SELECTED_PROP] = true;
+	                    ri.entity[SELECTED_PROP](true);
 	                    if (self.selectedItems.indexOf(ri.entity) === -1) {
 	                        self.selectedItems.push(ri.entity);
 	                    }
@@ -60,11 +60,13 @@ window.kg.SelectionService = function (grid) {
     // just call this func and hand it the rowItem you want to select (or de-select)    
     self.setSelection = function(rowItem, isSelected) {
         rowItem.selected(isSelected) ;
-        rowItem.entity[SELECTED_PROP] = isSelected;
+        rowItem.entity[SELECTED_PROP](isSelected);
         if (!isSelected) {
             var indx = self.selectedItems.indexOf(rowItem.entity);
-			self.selectedItems.splice(indx, 1);
-
+			//VERESOV: fix for case when element is removed from selected elements collection
+			if (indx >= 0) {
+				self.selectedItems.splice(indx, 1);
+			}
         } else {
             if (self.selectedItems.indexOf(rowItem.entity) === -1) {
                 self.selectedItems.push(rowItem.entity);
@@ -80,7 +82,7 @@ window.kg.SelectionService = function (grid) {
             self.selectedItems([]);
         }
         $.each(grid.filteredData(), function (i, item) {
-            item[SELECTED_PROP] = checkAll;
+            item[SELECTED_PROP](checkAll);
 
             if (checkAll) {
                 selected.push(item);
