@@ -22,7 +22,7 @@ window.kg.SelectionService = function (grid) {
     // function to manage the selection action of a data item (entity)
     self.ChangeSelection = function (rowItem, evt) {
         grid.$$selectionPhase = true;
-        if (evt && !(evt.ctrlKey || evt.shiftKey || isTouchClick(evt)) && self.multi) {
+        if (evt && !(evt.ctrlKey || evt.shiftKey || isTouchClick(evt) || grid.config.selectionMode === "touch") && self.multi) {
             // clear selection
             self.toggleSelectAll(false);
         }
@@ -38,18 +38,20 @@ window.kg.SelectionService = function (grid) {
                     grid.$$selectionPhase = false;
                     return false;
                 }
-                prevIndx++;
                 if (thisIndx < prevIndx) {
                     thisIndx = thisIndx ^ prevIndx;
                     prevIndx = thisIndx ^ prevIndx;
                     thisIndx = thisIndx ^ prevIndx;
-                }
+					thisIndx--;
+                } else {
+					prevIndx++;
+				}
                 var rows = [];
                 for (; prevIndx <= thisIndx; prevIndx++) {
                     var row = self.rowFactory.rowCache[prevIndx];
-                    /*if (!row) row = {
+                    if (!row) row = {
                         entity: self.rowFactory.parsedData[prevIndx] || grid.filteredData.peek()[prevIndx]
-                    };*/
+                    };
                     rows.push(row);
                 }
                 if (rowItem.beforeSelectionChange(rows, evt)) {

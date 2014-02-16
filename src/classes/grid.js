@@ -16,6 +16,7 @@ window.kg.Grid = function (options) {
             footerVisible: true,			
             displayFooter: undefined,
             canSelectRows: true,
+			selectionMode: 'mouse', // or touch
             selectAllState: ko.observable(false),
             data: ko.observableArray([]),
             columnDefs: undefined,
