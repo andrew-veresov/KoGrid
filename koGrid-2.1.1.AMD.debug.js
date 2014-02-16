@@ -4,6 +4,7 @@
 * License: MIT (http://www.opensource.org/licenses/mit-license.php)
 ***********************************************/
 
+define(['jquery', 'knockout'], function ($, ko) {
 (function (window) {
 'use strict';
 
@@ -2950,3 +2951,4 @@ window.kg.domUtilityService = {
 };
 getWidths();
 }(window));
+return kg;});
