@@ -141,8 +141,9 @@ window.kg.RowFactory = function (grid) {
         }
         self.dataChanged = true;
         self.rowCache = []; //if data source changes, kill this!
-        grid.selectedCells([]);
-        grid.selectedItems([]);
+		//we should we clear selection? same items could be in the selected list as in list of new objects!!!
+        //grid.selectedCells([]);
+        //grid.selectedItems([]);
         if (grid.config.groups.length > 0) {
             if (!grid.columns().filter(function (a) {
                 return a.field == 'Group';

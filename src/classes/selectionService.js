@@ -11,11 +11,18 @@ window.kg.SelectionService = function (grid) {
     self.Initialize = function (rowFactory) {
         self.rowFactory = rowFactory;
     };
+
+    function isTouchClick(evt) {
+        if (evt.type !== "click") return false;
+        if (evt.pointerType === "touch") return true;
+        if (evt.pointerType == undefined && evt.originalEvent != undefined) return isTouchClick(evt.originalEvent);
+        return false;
+    }
         
     // function to manage the selection action of a data item (entity)
     self.ChangeSelection = function (rowItem, evt) {
         grid.$$selectionPhase = true;
-        if (evt && !(evt.ctrlKey || evt.shiftKey) && self.multi) {
+        if (evt && !(evt.ctrlKey || evt.shiftKey || isTouchClick(evt)) && self.multi) {
             // clear selection
             self.toggleSelectAll(false);
         }
@@ -40,18 +47,20 @@ window.kg.SelectionService = function (grid) {
                 var rows = [];
                 for (; prevIndx <= thisIndx; prevIndx++) {
                     var row = self.rowFactory.rowCache[prevIndx];
-                    if (!row) row = {
+                    /*if (!row) row = {
                         entity: self.rowFactory.parsedData[prevIndx] || grid.filteredData.peek()[prevIndx]
-                    };
+                    };*/
                     rows.push(row);
                 }
                 if (rowItem.beforeSelectionChange(rows, evt)) {
                     $.each(rows, function(i, ri) {
-                        if (ri.selected) ri.selected(true);
-	                    ri.entity[SELECTED_PROP](true);
-                        if (self.selectedItems().indexOf(ri.entity) === -1) {
-                            self.selectedItems.peek().push(ri.entity);
-                        }
+						if (ri.entity != undefined) {
+							if (ri.selected) ri.selected(true);
+							ri.entity[SELECTED_PROP](true);
+							if (self.selectedItems().indexOf(ri.entity) === -1) {
+								self.selectedItems.peek().push(ri.entity);
+							}
+						}
                     });
                     self.selectedItems.notifySubscribers(self.selectedItems());
                     rows[rows.length - 1].afterSelectionChange(rows, evt);
