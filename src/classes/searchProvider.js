@@ -10,7 +10,7 @@
     self.evalFilter = function () {
         if (searchConditions.length === 0) {
             grid.filteredData(grid.sortedData.peek().filter(function(item) {
-                return !item._destroy;
+                return item && !item._destroy;
             }));
         } else {
             grid.filteredData(grid.sortedData.peek().filter(function(item) {

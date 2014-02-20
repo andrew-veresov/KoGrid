@@ -111,6 +111,7 @@ window.kg.Aggregate = function (aggEntity, config, rowFactory, selectionService)
                 return self.afterSelectionChange(self, event);
             }
         }
+		event.cancelBubble = true
         return false;
     };
     //selectify the entity
